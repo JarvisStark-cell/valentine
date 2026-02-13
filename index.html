@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gửi Em 💌</title>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- CẤU HÌNH CHUNG --- */
+        body {
+            background-color: #ffebee; /* Màu nền hồng phấn */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden; /* Chặn thanh cuộn */
+            font-family: 'Poppins', sans-serif;
+        }
+
+        /* --- HIỆU ỨNG TRÁI TIM NỀN --- */
+        .heart-bg {
+            position: fixed;
+            color: #ff8fa3;
+            font-size: 20px;
+            user-select: none;
+            top: -10vh;
+            z-index: -1;
+            animation-name: float-up;
+            animation-timing-function: linear;
+            opacity: 0;
+        }
+
+        @keyframes float-up {
+            0% { transform: translateY(110vh) scale(0.5); opacity: 0; }
+            10% { opacity: 0.8; }
+            100% { transform: translateY(-10vh) scale(1.2); opacity: 0; }
+        }
+
+        /* --- PHONG BAO LÌ XÌ/THƯ --- */
+        .envelope-wrapper {
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        .envelope-wrapper:hover { transform: scale(1.02); }
+
+        .envelope {
+            position: relative;
+            width: 320px;
+            height: 220px;
+            background-color: #e53935;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            border-radius: 5px;
+        }
+
+        /* Nắp trên (Flap) */
+        .envelope::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0;
+            z-index: 5;
+            border-top: 140px solid #d32f2f;
+            border-left: 160px solid transparent;
+            border-right: 160px solid transparent;
+            transform-origin: top;
+            transition: transform 0.5s ease-in-out 0.2s;
+        }
+
+        /* Thân túi (Pocket) */
+        .envelope::after {
+            content: "";
+            position: absolute;
+            z-index: 10;
+            bottom: 0; left: 0;
+            width: 0; height: 0;
+            border-bottom: 140px solid #ef5350;
+            border-left: 160px solid #e53935;
+            border-right: 160px solid #e53935;
+            border-top: 140px solid transparent;
+            pointer-events: none;
+        }
+
+        /* --- LÁ THƯ --- */
+        .letter {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 290px;
+            height: auto;
+            max-height: 180px; /* Thu gọn khi đóng */
+            background: #fffdf5;
+            text-align: center;
+            transition: all 0.6s ease-in-out; /* Mượt mà mọi chuyển động */
+            z-index: 3; /* Ban đầu nằm dưới túi */
+            padding: 20px;
+            box-sizing: border-box;
+            border-radius: 5px;
+            box-shadow: 0 -5px 15px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .letter-content {
+            opacity: 0;
+            transition: opacity 0.4s 0.6s;
+            font-family: 'Dancing Script', cursive;
+            color: #4a4a4a;
+            width: 100%;
+        }
+
+        .letter-content h2 { margin: 0 0 5px 0; font-size: 20px; color: #d32f2f; }
+        .letter-content p { font-size: 14px; margin: 5px 0; line-height: 1.4; }
+        .signature { display: block; margin-top: 10px; font-weight: bold; }
+        .ps-text { font-family: 'Poppins', sans-serif; font-size: 10px; color: #888; margin-top: 10px; font-style: italic; border-top: 1px dashed #ccc; padding-top: 5px; }
+        .question { margin-top: 10px; font-size: 16px; font-weight: bold; color: #d32f2f; }
+        
+        .buttons { margin-top: 15px; display: flex; gap: 10px; justify-content: center; width: 100%; }
+
+        /* --- STYLE CHO NÚT BẤM --- */
+        button { 
+            padding: 10px 25px; 
+            border: none; 
+            border-radius: 50px; 
+            cursor: pointer; 
+            font-family: 'Poppins', sans-serif; 
+            font-weight: 600; 
+            font-size: 14px; 
+            white-space: nowrap; /* Giữ chữ không bị xuống dòng */
+        }
+        
+        #yesBtn { 
+            background-color: #ff4081; 
+            color: white; 
+            box-shadow: 0 4px 10px rgba(255, 64, 129, 0.3);
+        }
+        
+        #noBtn { 
+            background-color: white; 
+            color: #ff4081; 
+            border: 1px solid #ff4081;
+            /* Quan trọng để nút No hiển thị trên tất cả mọi thứ khi chạy */
+            z-index: 9999; 
+            transition: 0.2s ease;
+        }
+
+        /* --- TRẠNG THÁI MỞ (OPEN) --- */
+        .envelope.open::before {
+            transform: rotateX(180deg);
+            z-index: 1;
+        }
+
+        .envelope.open .letter {
+            /* 1. Đưa lá thư lên lớp cao nhất (đè lên túi đỏ) */
+            z-index: 99; 
+            
+            /* 2. Vị trí cố định: Cách đáy 70px (chừa lại 1/3 túi đỏ bên dưới) */
+            bottom: 70px;
+            transform: translateX(-50%); /* Chỉ giữ căn giữa, bỏ trượt dọc */
+            
+            /* 3. Mở rộng chiều cao */
+            max-height: 800px; 
+            overflow: visible;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+        }
+
+        .envelope.open .letter-content { opacity: 1; }
+    </style>
+</head>
+<body>
+
+    <div class="envelope-wrapper" onclick="openLetter()">
+        <div class="envelope">
+            <div class="letter">
+                <div class="letter-content">
+                    <h2>Hey My,</h2>
+                    <p>
+                        Happy Valentine’s Day.<br>
+                        In a world that moves too fucking fast, you are my peace. I found a love for me. Loving you feels natural like my heart finally found where it belongs.<br>
+                        Thank you for being you. I love you! Meow
+                    </p>
+                    <span class="signature">Yours,<br>Tran Trong Nguyen</span>
+
+                    <div class="ps-text">
+                        (P.S. I wrote 100 lines of code just to find the perfect way to ask you this... and honestly, the 'No' button is rigged!)
+                    </div>
+                    
+                    <div class="question">Will you be my Valentine?</div>
+                    
+                    <div class="buttons">
+                        <button id="yesBtn" onclick="acceptLove(event)">Yes!</button>
+                        <button id="noBtn" onmouseover="moveButton(this)" ontouchstart="moveButton(this)">No</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+        // 1. MỞ THƯ
+        function openLetter() {
+            const envelope = document.querySelector('.envelope');
+            if (!envelope.classList.contains('open')) {
+                envelope.classList.add('open');
+            }
+        }
+
+        // 2. NÚT NO "CHẠY TRỐN" (LOGIC MỚI)
+        function moveButton(btn) {
+            // Ngăn chặn click nhầm vào thư
+            if (event) {
+                event.stopPropagation();
+                event.preventDefault();
+            }
+
+            // Mẹo: Đưa nút No ra ngoài body để nó không bị giới hạn bởi lá thư
+            if (btn.parentElement.className === 'buttons') {
+                document.body.appendChild(btn);
+                btn.style.position = 'fixed'; // Tự do bay lượn
+            }
+
+            // Tính toán vị trí ngẫu nhiên
+            const width = window.innerWidth;
+            const height = window.innerHeight;
+            
+            // Trừ hao kích thước nút để không bị lẹm ra ngoài màn hình
+            const newX = Math.random() * (width - 100);
+            const newY = Math.random() * (height - 50);
+
+            btn.style.left = newX + 'px';
+            btn.style.top = newY + 'px';
+        }
+
+        // 3. ĐỒNG Ý
+        function acceptLove(event) {
+            event.stopPropagation();
+            
+            // Bắn pháo giấy
+            const duration = 3 * 1000;
+            const end = Date.now() + duration;
+
+            (function frame() {
+                confetti({
+                    particleCount: 5,
+                    angle: 60,
+                    spread: 55,
+                    origin: { x: 0 },
+                    colors: ['#ff4081', '#ffc107', '#ffffff']
+                });
+                confetti({
+                    particleCount: 5,
+                    angle: 120,
+                    spread: 55,
+                    origin: { x: 1 },
+                    colors: ['#ff4081', '#ffc107', '#ffffff']
+                });
+
+                if (Date.now() < end) {
+                    requestAnimationFrame(frame);
+                }
+            }());
+
+            // Thay đổi nội dung thư chúc mừng
+            setTimeout(() => {
+                alert("Yay! ❤️ See you soon!");
+            }, 500);
+        }
+
+        // 4. TẠO TRÁI TIM BAY
+        function createHeart() {
+            const heart = document.createElement('div');
+            heart.classList.add('heart-bg');
+            heart.innerHTML = '❤️';
+            heart.style.left = Math.random() * 100 + 'vw';
+            heart.style.animationDuration = Math.random() * 3 + 2 + 's';
+            document.body.appendChild(heart);
+            setTimeout(() => heart.remove(), 5000);
+        }
+        setInterval(createHeart, 300);
+    </script>
+</body>
+</html>
